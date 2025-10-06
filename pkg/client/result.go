@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"os"
+	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/kyaxcorp/go-helper/conv"
 	"github.com/sosedoff/pgweb/pkg/command"
 )
 
@@ -176,11 +179,68 @@ func (res *Result) JSON() []byte {
 func ObjectsFromResult(res *Result) map[string]*Objects {
 	objects := map[string]*Objects{}
 
+	// filter out
+
+	// add some regex rules here
+	// the ones that i only allow
+	// the ones that i want to exclude
+	// in my case i want to hide all and show specific objects
+
+	hideAllObjects := os.Getenv("KYAX_HIDE_ALL_OBJECTS")
+	showObjects := os.Getenv("KYAX_SHOW_OBJECTS")
+	hideObjects := os.Getenv("KYAX_HIDE_OBJECTS")
+
+	// object should be delimited by comma
+	// different patterns can be used, mostly regex!
+
+	var rShowObjects *regexp.Regexp
+	var rHideObjects *regexp.Regexp
+	var err error
+
+	if showObjects != "" {
+		rShowObjects, err = regexp.Compile(showObjects)
+		if err != nil {
+			log.Println("Error compiling regex for show objects:", err)
+			return objects
+		}
+	}
+
+	if hideObjects != "" {
+		rHideObjects, err = regexp.Compile(showObjects)
+		if err != nil {
+			log.Println("Error compiling regex for hide objects:", err)
+			return objects
+		}
+	}
+
 	for _, row := range res.Rows {
 		oid := row[0].(string)
 		schema := row[1].(string)
 		name := row[2].(string)
 		objectType := row[3].(string)
+
+		// schema is public, pg_extension, crdb_internal
+		// name is table name
+
+		matchString := fmt.Sprintf("%s.%s", schema, name)
+
+		if conv.ParseBool(hideAllObjects) {
+			// Check only in the showObjects
+			if rShowObjects != nil {
+				if !rShowObjects.MatchString(matchString) {
+					continue
+				}
+			} else {
+				continue
+			}
+		} else {
+			// check only in the hideObjects
+			if rHideObjects != nil {
+				if rHideObjects.MatchString(matchString) {
+					continue
+				}
+			}
+		}
 
 		if objects[schema] == nil {
 			objects[schema] = &Objects{

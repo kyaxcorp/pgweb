@@ -6,3 +6,5 @@ pgweb
 bin
 tmp/
 cover.out
+.history
+.vscode
