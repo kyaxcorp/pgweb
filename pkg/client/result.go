@@ -187,9 +187,9 @@ func ObjectsFromResult(res *Result) map[string]*Objects {
 	// the ones that i want to exclude
 	// in my case i want to hide all and show specific objects
 
-	hideAllObjects := os.Getenv("KYAX_HIDE_ALL_OBJECTS")
-	showObjects := os.Getenv("KYAX_SHOW_OBJECTS")
-	hideObjects := os.Getenv("KYAX_HIDE_OBJECTS")
+	hideAllObjects := os.Getenv("KYAX_OBJECTS_HIDE_ALL")
+	showObjects := os.Getenv("KYAX_OBJECTS_SHOW")
+	hideObjects := os.Getenv("KYAX_OBJECTS_HIDE")
 
 	// object should be delimited by comma
 	// different patterns can be used, mostly regex!
