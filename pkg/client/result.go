@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kyaxcorp/go-helper/conv"
@@ -193,23 +194,30 @@ func ObjectsFromResult(res *Result) map[string]*Objects {
 	// object should be delimited by comma
 	// different patterns can be used, mostly regex!
 
-	var rShowObjects *regexp.Regexp
-	var rHideObjects *regexp.Regexp
-	var err error
+	var rShowObjects []*regexp.Regexp
+	var rHideObjects []*regexp.Regexp
 
 	if showObjects != "" {
-		rShowObjects, err = regexp.Compile(showObjects)
-		if err != nil {
-			log.Println("Error compiling regex for show objects:", err)
-			return objects
+		showObjectsSlice := strings.Split(showObjects, ",")
+		for _, obj := range showObjectsSlice {
+			regexCompiled, err := regexp.Compile(obj)
+			if err != nil {
+				log.Println("Error compiling regex for show objects:", err)
+				return objects
+			}
+			rShowObjects = append(rShowObjects, regexCompiled)
 		}
 	}
 
 	if hideObjects != "" {
-		rHideObjects, err = regexp.Compile(showObjects)
-		if err != nil {
-			log.Println("Error compiling regex for hide objects:", err)
-			return objects
+		hideObjectsSlice := strings.Split(hideObjects, ",")
+		for _, obj := range hideObjectsSlice {
+			regexCompiled, err := regexp.Compile(obj)
+			if err != nil {
+				log.Println("Error compiling regex for hide objects:", err)
+				return objects
+			}
+			rHideObjects = append(rHideObjects, regexCompiled)
 		}
 	}
 
@@ -226,8 +234,15 @@ func ObjectsFromResult(res *Result) map[string]*Objects {
 
 		if conv.ParseBool(hideAllObjects) {
 			// Check only in the showObjects
-			if rShowObjects != nil {
-				if !rShowObjects.MatchString(matchString) {
+			if len(rShowObjects) > 0 {
+				showObject := false
+				for _, r := range rShowObjects {
+					if r.MatchString(matchString) {
+						showObject = true
+						break
+					}
+				}
+				if !showObject {
 					continue
 				}
 			} else {
@@ -235,10 +250,19 @@ func ObjectsFromResult(res *Result) map[string]*Objects {
 			}
 		} else {
 			// check only in the hideObjects
-			if rHideObjects != nil {
-				if rHideObjects.MatchString(matchString) {
+			if len(rHideObjects) > 0 {
+				hideObject := false
+				for _, r := range rHideObjects {
+					if r.MatchString(matchString) {
+						hideObject = true
+						break
+					}
+				}
+				if hideObject {
 					continue
 				}
+			} else {
+				continue
 			}
 		}
 
