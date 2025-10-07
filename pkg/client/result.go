@@ -200,6 +200,9 @@ func ObjectsFromResult(res *Result) map[string]*Objects {
 	if showObjects != "" {
 		showObjectsSlice := strings.Split(showObjects, ",")
 		for _, obj := range showObjectsSlice {
+			if obj == "" {
+				continue
+			}
 			regexCompiled, err := regexp.Compile(obj)
 			if err != nil {
 				log.Println("Error compiling regex for show objects:", err)
@@ -212,6 +215,9 @@ func ObjectsFromResult(res *Result) map[string]*Objects {
 	if hideObjects != "" {
 		hideObjectsSlice := strings.Split(hideObjects, ",")
 		for _, obj := range hideObjectsSlice {
+			if obj == "" {
+				continue
+			}
 			regexCompiled, err := regexp.Compile(obj)
 			if err != nil {
 				log.Println("Error compiling regex for hide objects:", err)
