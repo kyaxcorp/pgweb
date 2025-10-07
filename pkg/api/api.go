@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	neturl "net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kyaxcorp/go-helper/conv"
 	"github.com/tuvistavie/securerandom"
 
 	"github.com/sosedoff/pgweb/pkg/bookmarks"
@@ -311,8 +313,27 @@ func Disconnect(c *gin.Context) {
 func RunQuery(c *gin.Context) {
 	query := cleanQuery(c.Request.FormValue("query"))
 
+	sQueryAllow := os.Getenv("KYAX_QUERY_ALLOW")
+	sQueryAllowShowTables := os.Getenv("KYAX_QUERY_ALLOW_SHOW_TABLES")
+	sQueryAllowShowDatabases := os.Getenv("KYAX_QUERY_ALLOW_SHOW_DATABASES")
+
 	if query == "" {
 		badRequest(c, errQueryRequired)
+		return
+	}
+
+	if sQueryAllow != "" && !conv.ParseBool(sQueryAllow) {
+		badRequest(c, errQueryForbidden)
+		return
+	}
+
+	if sQueryAllowShowTables != "" && !conv.ParseBool(sQueryAllowShowTables) && strings.Contains(query, "SHOW TABLES") {
+		badRequest(c, errQueryForbidden)
+		return
+	}
+
+	if sQueryAllowShowDatabases != "" && !conv.ParseBool(sQueryAllowShowDatabases) && strings.Contains(query, "SHOW DATABASES") {
+		badRequest(c, errQueryForbidden)
 		return
 	}
 
