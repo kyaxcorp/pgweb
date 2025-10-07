@@ -188,3 +188,7 @@ func errorResponse(c *gin.Context, status int, err interface{}) {
 func badRequest(c *gin.Context, err interface{}) {
 	errorResponse(c, 400, err)
 }
+
+func forbidden(c *gin.Context, err interface{}) {
+	errorResponse(c, 403, err)
+}

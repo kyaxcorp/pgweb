@@ -408,7 +408,7 @@ func GetTable(c *gin.Context) {
 	tableName := c.Params.ByName("table")
 
 	if !limit.ObjectAllow(tableName) {
-		badRequest(c, errForbidden)
+		forbidden(c, errForbidden)
 		return
 	}
 
@@ -427,7 +427,7 @@ func GetTable(c *gin.Context) {
 // GetTableRows renders table rows
 func GetTableRows(c *gin.Context) {
 	if !limit.ObjectAllow(c.Params.ByName("table")) {
-		badRequest(c, errForbidden)
+		forbidden(c, errForbidden)
 		return
 	}
 
@@ -485,7 +485,7 @@ func GetTableRows(c *gin.Context) {
 // GetTableInfo renders a selected table information
 func GetTableInfo(c *gin.Context) {
 	if !limit.ObjectAllow(c.Params.ByName("table")) {
-		badRequest(c, errForbidden)
+		forbidden(c, errForbidden)
 		return
 	}
 
@@ -538,7 +538,7 @@ func GetActivity(c *gin.Context) {
 // GetTableIndexes renders a list of database table indexes
 func GetTableIndexes(c *gin.Context) {
 	if !limit.ObjectAllow(c.Params.ByName("table")) {
-		badRequest(c, errForbidden)
+		forbidden(c, errForbidden)
 		return
 	}
 	res, err := DB(c).TableIndexes(c.Params.ByName("table"))
@@ -548,7 +548,7 @@ func GetTableIndexes(c *gin.Context) {
 // GetTableConstraints renders a list of database constraints
 func GetTableConstraints(c *gin.Context) {
 	if !limit.ObjectAllow(c.Params.ByName("table")) {
-		badRequest(c, errForbidden)
+		forbidden(c, errForbidden)
 		return
 	}
 	res, err := DB(c).TableConstraints(c.Params.ByName("table"))
