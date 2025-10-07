@@ -7,14 +7,11 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"os"
-	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/kyaxcorp/go-helper/conv"
 	"github.com/sosedoff/pgweb/pkg/command"
+	"github.com/sosedoff/pgweb/pkg/limit"
 )
 
 const (
@@ -180,53 +177,6 @@ func (res *Result) JSON() []byte {
 func ObjectsFromResult(res *Result) map[string]*Objects {
 	objects := map[string]*Objects{}
 
-	// filter out
-
-	// add some regex rules here
-	// the ones that i only allow
-	// the ones that i want to exclude
-	// in my case i want to hide all and show specific objects
-
-	hideAllObjects := os.Getenv("KYAX_OBJECTS_HIDE_ALL")
-	showObjects := os.Getenv("KYAX_OBJECTS_SHOW")
-	hideObjects := os.Getenv("KYAX_OBJECTS_HIDE")
-
-	// object should be delimited by comma
-	// different patterns can be used, mostly regex!
-
-	var rShowObjects []*regexp.Regexp
-	var rHideObjects []*regexp.Regexp
-
-	if showObjects != "" {
-		showObjectsSlice := strings.Split(showObjects, ",")
-		for _, obj := range showObjectsSlice {
-			if obj == "" {
-				continue
-			}
-			regexCompiled, err := regexp.Compile(obj)
-			if err != nil {
-				log.Println("Error compiling regex for show objects:", err)
-				return objects
-			}
-			rShowObjects = append(rShowObjects, regexCompiled)
-		}
-	}
-
-	if hideObjects != "" {
-		hideObjectsSlice := strings.Split(hideObjects, ",")
-		for _, obj := range hideObjectsSlice {
-			if obj == "" {
-				continue
-			}
-			regexCompiled, err := regexp.Compile(obj)
-			if err != nil {
-				log.Println("Error compiling regex for hide objects:", err)
-				return objects
-			}
-			rHideObjects = append(rHideObjects, regexCompiled)
-		}
-	}
-
 	for _, row := range res.Rows {
 		oid := row[0].(string)
 		schema := row[1].(string)
@@ -238,38 +188,8 @@ func ObjectsFromResult(res *Result) map[string]*Objects {
 
 		matchString := fmt.Sprintf("%s.%s", schema, name)
 
-		if conv.ParseBool(hideAllObjects) {
-			// Check only in the showObjects
-			if len(rShowObjects) > 0 {
-				showObject := false
-				for _, r := range rShowObjects {
-					if r.MatchString(matchString) {
-						showObject = true
-						break
-					}
-				}
-				if !showObject {
-					continue
-				}
-			} else {
-				continue
-			}
-		} else {
-			// check only in the hideObjects
-			if len(rHideObjects) > 0 {
-				hideObject := false
-				for _, r := range rHideObjects {
-					if r.MatchString(matchString) {
-						hideObject = true
-						break
-					}
-				}
-				if hideObject {
-					continue
-				}
-			} else {
-				continue
-			}
+		if !limit.ObjectAllow(matchString) {
+			continue
 		}
 
 		if objects[schema] == nil {

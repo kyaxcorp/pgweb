@@ -18,6 +18,7 @@ import (
 	"github.com/sosedoff/pgweb/pkg/client"
 	"github.com/sosedoff/pgweb/pkg/command"
 	"github.com/sosedoff/pgweb/pkg/connection"
+	"github.com/sosedoff/pgweb/pkg/limit"
 	"github.com/sosedoff/pgweb/pkg/metrics"
 	"github.com/sosedoff/pgweb/pkg/queries"
 	"github.com/sosedoff/pgweb/pkg/shared"
@@ -406,6 +407,11 @@ func GetTable(c *gin.Context) {
 	db := DB(c)
 	tableName := c.Params.ByName("table")
 
+	if !limit.ObjectAllow(tableName) {
+		badRequest(c, errForbidden)
+		return
+	}
+
 	switch c.Request.FormValue("type") {
 	case client.ObjTypeMaterializedView:
 		res, err = db.MaterializedView(tableName)
@@ -420,6 +426,11 @@ func GetTable(c *gin.Context) {
 
 // GetTableRows renders table rows
 func GetTableRows(c *gin.Context) {
+	if !limit.ObjectAllow(c.Params.ByName("table")) {
+		badRequest(c, errForbidden)
+		return
+	}
+
 	offset, err := parseIntFormValue(c, "offset", 0)
 	if err != nil {
 		badRequest(c, err)
@@ -473,6 +484,11 @@ func GetTableRows(c *gin.Context) {
 
 // GetTableInfo renders a selected table information
 func GetTableInfo(c *gin.Context) {
+	if !limit.ObjectAllow(c.Params.ByName("table")) {
+		badRequest(c, errForbidden)
+		return
+	}
+
 	res, err := DB(c).TableInfo(c.Params.ByName("table"))
 	if err == nil {
 		successResponse(c, res.Format()[0])
@@ -521,12 +537,20 @@ func GetActivity(c *gin.Context) {
 
 // GetTableIndexes renders a list of database table indexes
 func GetTableIndexes(c *gin.Context) {
+	if !limit.ObjectAllow(c.Params.ByName("table")) {
+		badRequest(c, errForbidden)
+		return
+	}
 	res, err := DB(c).TableIndexes(c.Params.ByName("table"))
 	serveResult(c, res, err)
 }
 
 // GetTableConstraints renders a list of database constraints
 func GetTableConstraints(c *gin.Context) {
+	if !limit.ObjectAllow(c.Params.ByName("table")) {
+		badRequest(c, errForbidden)
+		return
+	}
 	res, err := DB(c).TableConstraints(c.Params.ByName("table"))
 	serveResult(c, res, err)
 }
